@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css">
+    <title>Ultra basic dApp</title>
+</head>
+
+<body>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+
+    <div>
+        <h1>Ultra basic dApp!</h1>
+        <p>Here we can set or get the mood:</p>
+        <label for="mood">Input Mood:</label> <br />
+        <input type="text" id="mood" />
+        <button onclick="getMood()">Get Mood</button>
+        <button onclick="setMood()">Set Mood</button>
+    </div>
+
+    <script>
+
+        // Define an `ethers` provider
+        const provider = new ethers.providers.Web3Provider(window.ethereum, "ropsten");
+
+        const MoodContractAddress = "0xDd7143bEf016EE78B66D785328b4870F5B1E1EE6";
+        const MoodContractABI = [
+            {
+                "inputs": [],
+                "name": "getMood",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_mood",
+                        "type": "string"
+                    }
+                ],
+                "name": "setMood",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ]
+        let MoodContract;
+        let signer;
+
+
+        // Request access to the user's wallet
+        // provider.send("eth_requestAccounts", []).then(() => {
+        provider.send("eth_requestAccounts", []).then(() => {
+            provider.listAccounts().then(accounts => {
+                signer = provider.getSigner(accounts[0]);
+                MoodContract = new ethers.Contract(
+                    MoodContractAddress,
+                    MoodContractABI,
+                    signer
+                );
+            });
+        })
+
+        // Create asynchronous functions to 
+        // interact with the smart contract
+        async function getMood() {
+            const getMoodPromise = MoodContract.getMood();
+            console.log("\nWaiting for the smart contract response...")
+            const mood = await getMoodPromise;
+            console.log("The current mood is:", mood);
+        }
+
+        async function setMood() {
+            const mood = document.getElementById("mood").value;
+            if (mood == "") {
+                alert("Please input mood");
+            } else {
+                const setMoodPromise = MoodContract.setMood(mood);
+                console.log("\nWaiting for the transaction to be confirmed...")
+                await setMoodPromise;
+                console.log("Transaction confirmed!")
+            }
+        }
+    </script>
+
+</body>
+
+</html>
